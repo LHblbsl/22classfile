@@ -1,0 +1,155 @@
+[
+  {
+    "author": "user1",
+    "content": "1. 抄作业\n2. 二哥\n3. 二和",
+    "createdAt": "2025-10-04T16:59:49.426Z",
+    "itemDeadlines": [
+      {
+        "itemIndex": 0,
+        "deadline": "2025-10-04T16:57:45.474Z"
+      },
+      {
+        "itemIndex": 1,
+        "deadline": "2025-10-04T16:57:45.474Z"
+      },
+      {
+        "itemIndex": 2,
+        "deadline": "2025-10-04T16:57:45.474Z"
+      }
+    ],
+    "objectId": "68e15285e338d34df48d24df",
+    "title": "【作业】英语",
+    "type": "homework",
+    "updatedAt": "2025-10-04T16:59:49.426Z"
+  },
+  {
+    "author": "user1",
+    "content": "1. 抄作业\n2. 二哥\n3. 二和",
+    "createdAt": "2025-10-04T18:00:15.314Z",
+    "itemDeadlines": [
+      {
+        "itemIndex": 0,
+        "deadline": "2025-10-04T18:00:16.803Z"
+      },
+      {
+        "itemIndex": 1,
+        "deadline": "2025-10-04T18:00:16.803Z"
+      },
+      {
+        "itemIndex": 2,
+        "deadline": "2025-10-04T18:00:16.803Z"
+      }
+    ],
+    "objectId": "68e160af21dce511399ea07a",
+    "title": "【作业】英语",
+    "type": "homework",
+    "updatedAt": "2025-10-04T18:00:15.314Z"
+  },
+  {
+    "author": "user1",
+    "content": "1. 抄作业\n2. 二哥\n3. 二和",
+    "createdAt": "2025-10-04T19:31:01.669Z",
+    "objectId": "68e175f5eb5f221d6fabb267",
+    "title": "【作业】英语",
+    "type": "homework",
+    "updatedAt": "2025-10-04T19:31:01.669Z"
+  },
+  {
+    "author": "user1",
+    "content": "1. 都市剧（20）\n2. 读书（20）",
+    "createdAt": "2025-10-04T19:39:48.780Z",
+    "objectId": "68e178041c203d5a418a247c",
+    "title": "【早晚读】为鸭王y",
+    "type": "reading",
+    "updatedAt": "2025-10-04T19:39:48.780Z"
+  },
+  {
+    "author": "user1",
+    "content": "1. 抄作业\n2. 二哥\n3. 二和",
+    "createdAt": "2025-10-04T20:29:39.277Z",
+    "objectId": "68e183b31c203d5a418a2b47",
+    "title": "【作业】英语",
+    "type": "homework",
+    "updatedAt": "2025-10-04T20:29:39.277Z"
+  },
+  {
+    "author": "user1",
+    "content": "1. 抄作业\n2. 二哥\n3. 二和",
+    "createdAt": "2025-10-04T20:29:56.022Z",
+    "objectId": "68e183c421dce511399ebaf6",
+    "title": "【作业】英语",
+    "type": "homework",
+    "updatedAt": "2025-10-04T20:29:56.022Z"
+  },
+  {
+    "author": "user1",
+    "content": "1. 抄作业\n2. 二哥\n3. 二和",
+    "createdAt": "2025-10-05T02:07:32.895Z",
+    "fileCount": 1,
+    "fileNames": [
+      "Lucy.mp4"
+    ],
+    "fileUniqueNames": [
+      "files_1759630041624_x375un.mp4"
+    ],
+    "fileUrls": [
+      "https://raw.githubusercontent.com/LHblbsl/22classfile/main/uploads/files/files_1759630041624_x375un.mp4"
+    ],
+    "objectId": "68e1d2e4c29a3849f8fda201",
+    "title": "【作业】英语",
+    "type": "homework",
+    "updatedAt": "2025-10-05T02:07:32.895Z"
+  },
+  {
+    "author": "user1",
+    "content": "1. TEST（10分钟）\n2. TEST（20分钟）",
+    "createdAt": "2025-10-05T02:49:51.692Z",
+    "objectId": "68e1dccfeb5f221d6fac8fae",
+    "readingDuration": 30,
+    "readingEndTime": "2025-10-05T10:30:00.000Z",
+    "readingStartTime": "2025-10-05T10:00:00.000Z",
+    "readingType": "evening",
+    "title": "【早晚读】TEST",
+    "type": "reading",
+    "updatedAt": "2025-10-05T02:49:51.692Z"
+  },
+  {
+    "author": "user1",
+    "content": "1. TEST（10分钟）\n2. TEST（20分钟）",
+    "createdAt": "2025-10-05T03:00:12.344Z",
+    "objectId": "68e1df3ce338d34df48e2edd",
+    "readingDuration": 30,
+    "readingEndTime": "2025-10-05T06:39:13.000Z",
+    "readingStartTime": "2025-10-05T06:09:13.000Z",
+    "readingType": "custom",
+    "title": "【早晚读】TEST",
+    "type": "reading",
+    "updatedAt": "2025-10-05T03:00:12.344Z"
+  },
+  {
+    "author": "user1",
+    "content": "1. TEST（10分钟）\n2. TEST（20分钟）",
+    "createdAt": "2025-10-05T03:00:45.626Z",
+    "objectId": "68e1df5deb5f221d6fac9a78",
+    "readingDuration": 30,
+    "readingEndTime": "2025-10-04T23:50:00.000Z",
+    "readingStartTime": "2025-10-04T23:20:00.000Z",
+    "readingType": "morning",
+    "title": "【早晚读】TEST",
+    "type": "reading",
+    "updatedAt": "2025-10-05T03:00:45.626Z"
+  },
+  {
+    "author": "user1",
+    "content": "1. TEST（10分钟）\n2. TEST（20分钟）",
+    "createdAt": "2025-10-05T03:00:54.029Z",
+    "objectId": "68e1df66e338d34df48e2f8a",
+    "readingDuration": 30,
+    "readingEndTime": "2025-10-05T10:30:00.000Z",
+    "readingStartTime": "2025-10-05T10:00:00.000Z",
+    "readingType": "evening",
+    "title": "【早晚读】TEST",
+    "type": "reading",
+    "updatedAt": "2025-10-05T03:00:54.029Z"
+  }
+]
