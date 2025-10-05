@@ -1,0 +1,456 @@
+/// <summary>
+/// 最小化窗口：只保留最新一个作业项，其他作业项收缩隐藏
+/// 这个方法实现了窗口的"智能最小化"功能，让用户专注于最新的作业
+/// </summary>
+private void MinimizeToLatestHomework()
+{
+    // 安全检查：如果作业列表为空，直接返回
+    if (HomeworkListPanel.Children.Count == 0) return;
+
+    Console.WriteLine("最小化：只保留最新一个条目");
+
+    // 第一步：保存所有作业项的原始高度
+    // 使用字典记录每个Border控件的原始高度，便于后续恢复
+    _originalHeights.Clear();
+    foreach (var child in HomeworkListPanel.Children)
+    {
+        if (child is Border border)
+        {
+            _originalHeights[border] = border.ActualHeight;
+        }
+    }
+
+    // 第二步：计算目标高度
+    // 最小化后的高度 = 第一个作业（最新）的高度 + 固定的标题栏和边距高度(80像素)
+    double targetHeight = GetFirstHomeworkHeight() + 80;
+
+    // 第三步：播放窗口高度动画
+    // 使用缓动函数让动画更自然，从当前高度平滑过渡到目标高度
+    AnimateWindowHeight(this.ActualHeight, targetHeight, TimeSpan.FromSeconds(0.4));
+
+    // 第四步：处理每个作业项的显示/隐藏
+    for (int i = 0; i < HomeworkListPanel.Children.Count; i++)
+    {
+        var child = HomeworkListPanel.Children[i];
+        if (child is Border border)
+        {
+            if (i == 0) // 第一个作业（最新的）
+            {
+                // 保留第一个作业，保持原高度不变
+                continue;
+            }
+            else // 其他作业
+            {
+                // 播放高度收缩动画：从当前高度收缩到0
+                AnimateHomeworkHeight(border, border.ActualHeight, 0, TimeSpan.FromSeconds(0.3));
+
+                // 使用定时器在动画完成后隐藏作业项
+                // 这样可以让用户看到收缩动画效果
+                var timer = new DispatcherTimer();
+                timer.Interval = TimeSpan.FromSeconds(0.3);
+                timer.Tick += (s, e) =>
+                {
+                    timer.Stop();
+                    border.Visibility = Visibility.Collapsed;
+                };
+                timer.Start();
+            }
+        }
+    }
+
+    // 第五步：通知早晚读窗口位置变化
+    // 让早晚读窗口知道作业窗口已经最小化，需要调整自己的位置
+    NotifyReadingWindow();
+}
+
+/// <summary>
+/// 展开所有作业项：恢复显示所有作业
+/// 这是最小化的逆操作，将所有隐藏的作业项重新显示出来
+/// </summary>
+private void ExpandAllHomeworkItems()
+{
+    Console.WriteLine("展开所有作业");
+
+    // 第一步：计算所有作业的总高度
+    double totalContentHeight = 0;
+    foreach (var kvp in _originalHeights)
+    {
+        totalContentHeight += kvp.Value;
+    }
+
+    // 第二步：计算目标高度
+    // 展开后的高度 = 所有作业总高度 + 固定的标题栏和边距高度(80像素)
+    double targetHeight = totalContentHeight + 80;
+
+    // 第三步：播放窗口高度展开动画
+    AnimateWindowHeight(this.ActualHeight, targetHeight, TimeSpan.FromSeconds(0.4));
+
+    // 第四步：恢复所有作业项的高度和可见性
+    foreach (var kvp in _originalHeights)
+    {
+        var border = kvp.Key;
+        var originalHeight = kvp.Value;
+
+        // 先设置为可见但高度为0（从收缩状态开始）
+        border.Visibility = Visibility.Visible;
+        border.Height = 0;
+
+        // 播放高度展开动画：从0展开到原始高度
+        AnimateHomeworkHeight(border, 0, originalHeight, TimeSpan.FromSeconds(0.3));
+
+        // 使用定时器在动画完成后恢复自动高度
+        // 这是为了确保布局系统能够正确计算后续的高度变化
+        var timer = new DispatcherTimer();
+        timer.Interval = TimeSpan.FromSeconds(0.3);
+        timer.Tick += (s, e) =>
+        {
+            timer.Stop();
+            border.Height = double.NaN; // 恢复自动高度，让WPF自动计算
+            border.MinHeight = 0;
+            border.MaxHeight = double.PositiveInfinity;
+        };
+        timer.Start();
+    }
+
+    // 第五步：通知早晚读窗口位置变化
+    NotifyReadingWindow();
+}
+
+/// <summary>
+/// 单个作业项的高度动画
+/// 这个方法负责播放单个作业项的收缩/展开动画
+/// </summary>
+/// <param name="homeworkBorder">要动画的作业边框</param>
+/// <param name="fromHeight">起始高度</param>
+/// <param name="toHeight">目标高度</param>
+/// <param name="duration">动画持续时间</param>
+private void AnimateHomeworkHeight(Border homeworkBorder, double fromHeight, double toHeight, TimeSpan duration)
+{
+    // 确保边框可见性正确：如果要展开（目标高度>0），先设置为可见
+    if (toHeight > 0)
+    {
+        homeworkBorder.Visibility = Visibility.Visible;
+    }
+
+    // 创建高度动画
+    var heightAnimation = new DoubleAnimation
+    {
+        From = fromHeight,
+        To = toHeight,
+        Duration = duration,
+        EasingFunction = new CubicEase { EasingMode = EasingMode.EaseInOut } // 缓动函数让动画更自然
+    };
+
+    // 设置动画完成后的回调
+    heightAnimation.Completed += (s, e) =>
+    {
+        // 动画完成后设置最终高度
+        homeworkBorder.Height = toHeight;
+        
+        // 如果完全收缩（高度为0），隐藏控件
+        if (toHeight == 0)
+        {
+            homeworkBorder.Visibility = Visibility.Collapsed;
+        }
+
+        // 强制更新布局，确保WPF重新计算布局
+        homeworkBorder.InvalidateMeasure();
+        homeworkBorder.InvalidateArrange();
+    };
+
+    // 启动动画
+    homeworkBorder.BeginAnimation(Border.HeightProperty, heightAnimation);
+}
+
+/// <summary>
+/// 窗口高度动画
+/// 这个方法负责播放整个窗口的高度变化动画
+/// </summary>
+private void AnimateWindowHeight(double fromHeight, double toHeight, TimeSpan duration)
+{
+    var heightAnimation = new DoubleAnimation
+    {
+        From = fromHeight,
+        To = toHeight,
+        Duration = duration,
+        EasingFunction = new CubicEase { EasingMode = EasingMode.EaseInOut }
+    };
+
+    // 动画完成后的回调
+    heightAnimation.Completed += (s, e) =>
+    {
+        this.Height = toHeight;
+        // 安全保护：确保窗口不会太小
+        if (this.Height < 100) this.Height = 100;
+        Console.WriteLine($"窗口高度动画完成: {this.Height}");
+    };
+
+    this.BeginAnimation(HeightProperty, heightAnimation);
+}
+/// <summary>
+/// 统一的位置通知方法 - 核心方法
+/// 这个方法负责通知早晚读窗口作业窗口的位置和大小变化
+/// 早晚读窗口会根据这个信息自动调整自己的位置，紧贴在作业窗口下方
+/// </summary>
+private void NotifyReadingWindow()
+{
+    // 检查是否有订阅者（早晚读窗口是否在监听）
+    if (PositionChangedForReading != null)
+    {
+        // 关键计算：获取作业内容的底部位置
+        // 这个位置就是早晚读窗口应该放置的Top位置
+        double homeworkBottom = GetHomeworkBottomPosition();
+
+        // 使用Dispatcher确保在UI线程执行
+        Dispatcher.BeginInvoke(() =>
+        {
+            // 触发位置变化事件，传递所有必要信息
+            PositionChangedForReading?.Invoke(this, new PositionChangedEventArgs
+            {
+                Left = this.Left,           // 作业窗口的左边界
+                Top = homeworkBottom,       // 关键：早晚读窗口的Top位置（紧贴作业底部）
+                Width = this.Width,         // 作业窗口的宽度
+                ContentHeight = GetHomeworkListActualHeight(),  // 作业内容实际高度
+                IsMinimized = _isWindowHeightMinimized          // 是否最小化状态
+            });
+
+            // 调试信息，便于排查位置问题
+            /* Console.WriteLine($"通知早晚读窗口: 底部位置={homeworkBottom}, 最小化={_isWindowHeightMinimized}"); */
+        }, DispatcherPriority.Render); // 使用Render优先级确保及时更新
+    }
+}
+
+/// <summary>
+/// 计算作业内容的底部位置（相对于屏幕）
+/// 这是位置计算的核心方法，决定了早晚读窗口的位置
+/// </summary>
+/// <returns>作业内容在屏幕坐标系中的底部Y坐标</returns>
+private double GetHomeworkBottomPosition()
+{
+    try
+    {
+        // 安全检查
+        if (HomeworkListPanel == null || HomeworkListPanel.Children.Count == 0)
+            return this.Top;
+
+        Border targetHomework;
+
+        // 根据最小化状态选择目标作业项
+        if (_isWindowHeightMinimized)
+        {
+            // 最小化状态：使用第一个作业（最新的）
+            targetHomework = HomeworkListPanel.Children[0] as Border;
+        }
+        else
+        {
+            // 正常状态：使用最后一个作业
+            targetHomework = HomeworkListPanel.Children[HomeworkListPanel.Children.Count - 1] as Border;
+        }
+
+        if (targetHomework != null && targetHomework.Visibility == Visibility.Visible)
+        {
+            // 强制布局更新，确保获取准确的位置信息
+            this.UpdateLayout();
+            HomeworkListPanel.UpdateLayout();
+            targetHomework.UpdateLayout();
+
+            // 关键计算：将作业项的底部位置转换为屏幕坐标
+            // TransformToAncestor方法将控件内的坐标转换为父容器（this）的坐标
+            Point homeworkBottomPoint = targetHomework.TransformToAncestor(this).Transform(
+                new Point(0, targetHomework.ActualHeight));
+
+            // 计算在屏幕中的绝对位置：窗口Top + 作业项在窗口内的底部偏移
+            double bottomPosition = this.Top + homeworkBottomPoint.Y;
+
+            /* Console.WriteLine($"作业底部位置: 状态={(_isWindowHeightMinimized ? "最小化" : "正常")}, 位置={bottomPosition}"); */
+            return bottomPosition;
+        }
+
+        return this.Top;
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"计算作业底部位置错误: {ex.Message}");
+        return this.Top;
+    }
+}
+
+/// <summary>
+/// 获取作业列表的实际高度
+/// 这个方法考虑了最小化状态，返回当前可见的作业总高度
+/// </summary>
+/// <returns>作业内容的实际高度</returns>
+public double GetHomeworkListActualHeight()
+{
+    try
+    {
+        if (HomeworkListPanel == null || HomeworkListPanel.Children.Count == 0)
+            return 0;
+
+        // 如果是最小化状态，只计算第一个作业的高度
+        if (_isWindowHeightMinimized)
+        {
+            var firstHomework = HomeworkListPanel.Children[0] as Border;
+            if (firstHomework != null && firstHomework.Visibility == Visibility.Visible)
+            {
+                firstHomework.UpdateLayout();
+                double actualHeight = firstHomework.ActualHeight;
+                /* Console.WriteLine($"最小化状态作业高度计算: 第一个作业高度={actualHeight}"); */
+                return actualHeight;
+            }
+        }
+        else
+        {
+            // 正常状态：计算所有可见作业的总高度
+            double totalHeight = 0;
+            foreach (var child in HomeworkListPanel.Children)
+            {
+                if (child is Border homework && homework.Visibility == Visibility.Visible)
+                {
+                    homework.UpdateLayout();
+                    totalHeight += homework.ActualHeight;
+                }
+            }
+            /* Console.WriteLine($"正常状态作业高度计算: 总高度={totalHeight}"); */
+            return totalHeight;
+        }
+
+        return 0;
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"获取作业高度错误: {ex.Message}");
+        return 0;
+    }
+}
+
+/// <summary>
+/// 位置通知的防抖版本
+/// 防止在频繁位置变化时过度触发通知
+/// </summary>
+private DateTime _lastPositionNotification = DateTime.MinValue;
+
+private void UpdateReadingWindowPosition()
+{
+    // 防抖处理：100毫秒内只触发一次
+    var now = DateTime.Now;
+    if ((now - _lastPositionNotification).TotalMilliseconds < 100)
+        return;
+
+    _lastPositionNotification = now;
+
+    // 只有在非拖动状态且有待通知时才发送通知
+    if (!_isDragging && PositionChangedForReading != null)
+    {
+        double contentHeight;
+        double targetTop;
+
+        if (_isWindowHeightMinimized)
+        {
+            // 最小化状态：只计算最后一个作业的高度
+            contentHeight = GetLatestHomeworkHeight();
+            targetTop = this.Top + contentHeight + 5; // 加5像素的间距
+        }
+        else
+        {
+            // 正常状态：计算所有作业的总高度
+            contentHeight = GetHomeworkListActualHeight();
+            targetTop = this.Top + contentHeight + 5; // 加5像素的间距
+        }
+
+        Dispatcher.BeginInvoke(() =>
+        {
+            PositionChangedForReading?.Invoke(this, new PositionChangedEventArgs
+            {
+                Left = this.Left,
+                Top = targetTop,
+                Width = this.Width,
+                ContentHeight = contentHeight,
+                IsMinimized = _isWindowHeightMinimized
+            });
+
+            /* Console.WriteLine($"通知早晚读窗口: 最小化={_isWindowHeightMinimized}, 内容高={contentHeight:F1}, 目标Top={targetTop:F1}"); */
+        }, DispatcherPriority.Background);
+    }
+}
+
+// 重写窗口事件，在位置和大小变化时自动通知
+protected override void OnLocationChanged(EventArgs e)
+{
+    base.OnLocationChanged(e);
+    NotifyReadingWindow(); // 窗口移动时通知
+}
+
+protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)
+{
+    base.OnRenderSizeChanged(sizeInfo);
+    NotifyReadingWindow(); // 窗口大小变化时通知
+}
+/// <summary>
+/// 位置变化事件参数
+/// 这个类封装了所有需要传递给早晚读窗口的位置信息
+/// </summary>
+public class PositionChangedEventArgs : EventArgs
+{
+    /// <summary>
+    /// 作业窗口的左边界位置
+    /// 早晚读窗口的Left应该与此对齐
+    /// </summary>
+    public double Left { get; set; }
+    
+    /// <summary>
+    /// 关键属性：早晚读窗口的Top位置
+    /// 这个值等于作业窗口Top + 作业内容高度
+    /// </summary>
+    public double Top { get; set; }
+    
+    /// <summary>
+    /// 作业窗口的宽度
+    /// 早晚读窗口的Width应该与此相同以保持对齐
+    /// </summary>
+    public double Width { get; set; }
+    
+    /// <summary>
+    /// 作业内容的实际高度（不包括窗口边框和标题栏）
+    /// 早晚读窗口可以根据这个值进行自己的布局计算
+    /// </summary>
+    public double ContentHeight { get; set; }
+    
+    /// <summary>
+    /// 是否处于最小化状态
+    /// 早晚读窗口可以根据这个状态调整自己的行为
+    /// </summary>
+    public bool IsMinimized { get; set; }
+}关键设计要点说明
+1. 位置计算原理
+使用 TransformToAncestor() 方法将控件坐标转换为屏幕坐标
+
+早晚读窗口的 Top = 作业窗口 Top + 作业内容高度
+
+这样确保早晚读窗口紧贴在作业窗口下方，无缝隙衔接
+
+2. 动画系统
+使用 WPF 的 DoubleAnimation 实现平滑动画
+
+使用 CubicEase 缓动函数让动画更自然
+
+动画完成后需要手动更新布局 (InvalidateMeasure, InvalidateArrange)
+
+3. 状态管理
+_isWindowHeightMinimized 标记最小化状态
+
+_originalHeights 字典保存原始高度用于恢复
+
+最小化状态只显示第一个作业，正常状态显示所有作业
+
+4. 防抖机制
+使用时间戳防止频繁的位置通知
+
+确保在拖动等连续操作时不会过度触发事件
+
+5. 线程安全
+使用 Dispatcher.BeginInvoke 确保在 UI 线程更新
+
+使用合适的优先级 (Render, Background) 平衡性能和响应性
+
+这套系统确保了作业窗口和早晚读窗口的完美协同工作，无论作业窗口如何移动、缩放或最小化，早晚读窗口都能自动调整到正确的位置。
